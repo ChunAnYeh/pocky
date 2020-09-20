@@ -1,0 +1,2 @@
+set(pocky_vision_MESSAGE_FILES "/home/iclab/Documents/solomon_ws/src/pocky_vision/msg/ROI_array_bottom.msg;/home/iclab/Documents/solomon_ws/src/pocky_vision/msg/ROI_array_top.msg;/home/iclab/Documents/solomon_ws/src/pocky_vision/msg/ROI_bottom.msg;/home/iclab/Documents/solomon_ws/src/pocky_vision/msg/ROI_top.msg;/home/iclab/Documents/solomon_ws/src/pocky_vision/msg/vision_state.msg")
+set(pocky_vision_SERVICE_FILES "/home/iclab/Documents/solomon_ws/src/pocky_vision/srv/pocky_data.srv")

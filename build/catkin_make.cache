@@ -1,0 +1,2 @@
+pocky_vision
+-DCATKIN_DEVEL_PREFIX=/home/iclab/Documents/solomon_ws/devel -DCMAKE_INSTALL_PREFIX=/home/iclab/Documents/solomon_ws/install -G Unix Makefiles

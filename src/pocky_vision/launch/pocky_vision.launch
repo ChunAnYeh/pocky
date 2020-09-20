@@ -1,0 +1,4 @@
+<launch>
+  <node name="pocky_vision_node" pkg="pocky_vision" type="SIFT_Mathing.py"  output = "screen">  </node>
+  
+</launch>
