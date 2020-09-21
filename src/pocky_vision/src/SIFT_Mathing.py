@@ -49,6 +49,7 @@ bottom_CenterY = []
 ##
 
 look_done = False
+req_flag = 0
 
 
 def dep_img(map1):
@@ -189,7 +190,7 @@ def Matches(image, Match_image, angle, box, point, CenterX, CenterY):
             angle1 = np.rad2deg(np.arctan2(Y1,X1))
             angle2 = np.rad2deg(np.arctan2(Y2,X2))
             # print(angle1,angle2)
-            angle_diff = angle2 - angle1
+            angle_diff = -(angle2 - angle1)
             print('angle_1',angle1)
             print('angle_2',angle2)
             print('angle',angle_diff)
@@ -544,7 +545,7 @@ def contours_demo(image,x,y):
     hsv = cv.cvtColor(d, cv.COLOR_BGR2HSV) 
     cv.namedWindow("hsv1", cv.WINDOW_NORMAL) #設置為WINDOW_NORMAL可以任意縮放
     cv.imshow("hsv1",hsv)
-    lower_red = np.array([0,48,100]) 
+    lower_red = np.array([0,48,150]) 
     upper_red = np.array([111, 255, 255]) 
     mask = cv.inRange(hsv, lower_red, upper_red) 
     cv.namedWindow("hsv", cv.WINDOW_NORMAL) #設置為WINDOW_NORMAL可以任意縮放
@@ -687,7 +688,7 @@ class pocky_top_data_class():
 top_class = pocky_top_data_class(0,0,0,0)
 
 def pocky_data_sent(req):
-    global look_done
+    global look_done , req_flag
     res = pocky_dataResponse()
     if look_done == True:
         res.is_done = True
@@ -707,11 +708,11 @@ def pocky_data_sent(req):
 if __name__ == '__main__':
     MIN_MATCH_COUNT = 15 #设置最低特征点匹配数量为5
     rospy.init_node("pocky_vision_node")
-    # rate = rospy.Rate(10)
+    rate = rospy.Rate(100)
     # pub_top = rospy.Publisher("top_obj_data",ROI_array_top,queue_size= 10)
     # pub_bottom = rospy.Publisher("bottom_obj_data",ROI_array_bottom,queue_size= 10)
     # pub_visionstae = rospy.Publisher("vision_state",vision_state,queue_size= 10)
-    pocky_srv = rospy.Service('pockey_service',pocky_data,pocky_data_sent)
+    pocky_srv = rospy.Service('pocky_service',pocky_data,pocky_data_sent)
     # take_pic()
     # Auto_Take_Pic() 
 
@@ -719,357 +720,367 @@ if __name__ == '__main__':
     for x in range(50):
         pipeline_1.wait_for_frames()
     try:
-        start_input = int(input('開始兩層策略請按1 開始單層策略請按2 手動拍照請按3 深度資料請按4 離開請按5 : ')) #輸入開始指令
-        # while not rospy.is_shutdown():
-        if start_input == 1:
-            # Camera 1
-            frames_1 = pipeline_1.wait_for_frames()
-            color_frame_1 = frames_1.get_color_frame()
-            color_image_1 = np.asanyarray(color_frame_1.get_data())
+        while not rospy.is_shutdown():
+            global req_flag
+            start_input = req_flag
+            # start_input = int(input('開始兩層策略請按1 開始單層策略請按2 手動拍照請按3 深度資料請按4 離開請按5 : ')) #輸入開始指令
+            # while not rospy.is_shutdown():
+            if start_input == 0:
+                pass
+            elif start_input == 1:
+                # Camera 1
+                frames_1 = pipeline_1.wait_for_frames()
+                color_frame_1 = frames_1.get_color_frame()
+                color_image_1 = np.asanyarray(color_frame_1.get_data())
 
-            # Camera 2
-            frames_2 = pipeline_2.wait_for_frames()
-            color_frame_2 = frames_2.get_color_frame()
-            color_image_2 = np.asanyarray(color_frame_2.get_data())
+                # Camera 2
+                frames_2 = pipeline_2.wait_for_frames()
+                color_frame_2 = frames_2.get_color_frame()
+                color_image_2 = np.asanyarray(color_frame_2.get_data())
 
-            # Stack all images horizontally
-            images = np.hstack((color_image_1,color_image_2))
+                # Stack all images horizontally
+                images = np.hstack((color_image_1,color_image_2))
 
-            # Show images
-            # cv.namedWindow('RealSense', cv.WINDOW_NORMAL)
-            # cv.imshow('RealSense', images)
-            # cv.waitKey(1)
+                # Show images
+                # cv.namedWindow('RealSense', cv.WINDOW_NORMAL)
+                # cv.imshow('RealSense', images)
+                # cv.waitKey(1)
 
-            cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/00.png',color_image_1)
-            cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/01.png',color_image_2)
+                cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/00.png',color_image_1)
+                cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/01.png',color_image_2)
 
-            box_in_sence_1 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/00.png') # A處照片top 輸入圖檔
-            box_in_sence_2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/01.png',0) # A處照片bottom 輸入圖檔
+                box_in_sence_1 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/00.png') # A處照片top 輸入圖檔
+                box_in_sence_2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/01.png',0) # A處照片bottom 輸入圖檔
 
-            # 正面
-            box_1 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_top2.png',0)
-            box_2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_top2.png',0)
-            box_3 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_top2.png',0)
-            box_4 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_top2.png',0)
-            box_5 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_top2.png',0)
-            box_6 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_top2.png',0)
-            # 反面
-            box_7 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_bottom2.png',0)
-            box_8 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_bottom2.png',0)
-            box_9 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_bottom2.png',0)
-            box_10 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_bottom2.png',0)
-            box_11 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_bottom2.png',0)
-            box_12 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_bottom2.png',0)
+                # 正面
+                box_1 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_top2.png',0)
+                box_2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_top2.png',0)
+                box_3 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_top2.png',0)
+                box_4 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_top2.png',0)
+                box_5 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_top2.png',0)
+                box_6 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_top2.png',0)
+                # 反面
+                box_7 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_bottom2.png',0)
+                box_8 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_bottom2.png',0)
+                box_9 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_bottom2.png',0)
+                box_10 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_bottom2.png',0)
+                box_11 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_bottom2.png',0)
+                box_12 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_bottom2.png',0)
 
-            box_list_1 = [box_1,box_2,box_3,box_4,box_5,box_6]
-            # box_list_1 = []
-            # box_list_2 = [box_7,box_8,box_9,box_10,box_11,box_12]
-            box_list_2 = []
-            top_box = []
-            top_Angle = []
-            top_point = []
-            top_CenterX = []
-            top_CenterY = []
-            bottom_box = []
-            bottom_Angle = []
-            bottom_point = []
-            bottom_CenterX = []
-            bottom_CenterY = []
-            abc = []
+                box_list_1 = [box_1,box_2,box_3,box_4,box_5,box_6]
+                # box_list_1 = []
+                # box_list_2 = [box_7,box_8,box_9,box_10,box_11,box_12]
+                box_list_2 = []
+                top_box = []
+                top_Angle = []
+                top_point = []
+                top_CenterX = []
+                top_CenterY = []
+                bottom_box = []
+                bottom_Angle = []
+                bottom_point = []
+                bottom_CenterX = []
+                bottom_CenterY = []
+                abc = []
 
-            #   dep
-            depth_colormap_1 = []
-            box_x = []
-            box_y = []
-            dep = RealSense_dep(depth_colormap_1)
-            # print(top)
-            src = dep
+                #   dep
+                depth_colormap_1 = []
+                box_x = []
+                box_y = []
+                dep = RealSense_dep(depth_colormap_1)
+                # print(top)
+                src = dep
 
-            AA = contours_demo(src,box_x,box_y)
-            dep_cm = RealSense2(box_x,box_y)
-            # print(AA)
-            cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/AA.png', AA)
-            #   dep
+                AA = contours_demo(src,box_x,box_y)
+                dep_cm = RealSense2(box_x,box_y)
+                # print(AA)
+                cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/AA.png', AA)
+                #   dep
 
-            src2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/AA.png')
-            top_img = access_pixels(box_in_sence_1,src2)
+                src2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/AA.png')
+                top_img = access_pixels(box_in_sence_1,src2)
 
-            top = Matches(top_img,box_list_1,top_Angle,top_box,top_point,top_CenterX,top_CenterY)
-            if(len(top_box)==6):
-                out = Bubble_Sort2(top_box,top_Angle,top_point,top_CenterX,top_CenterY) #tag and 角度
-                print('top_box : ',top_box)
-                print('top_CenterX : ',top_CenterX)
-                print('top_CenterY : ',top_CenterY)
-                print('top_Angle : ',top_Angle) 
-                print('top_point : ',top_point)
-                print('bottom_box : ',bottom_box)
-                print('bottom_CenterX : ',bottom_CenterX)
-                print('bottom_CenterY : ',bottom_CenterY)
-                print('bottom_Angle : ',bottom_Angle) 
-                print('bottom_point : ',bottom_point) 
-                print('********** 結束 **********') 
-            else :
-                n = len(top_box)
-                out = Bubble_Sort2(top_box,top_Angle,top_point,top_CenterX,top_CenterY) #tag and 角度
-                a = (6-n)
-                print(a)
-                print('top_box : ',top_box)
-                print('top_CenterX : ',top_CenterX)
-                print('top_CenterY : ',top_CenterY)
-                print('top_Angle : ',top_Angle) 
-                print('top_point : ',top_point) 
-                loop = a
-                if((loop)>0):
-                    print(loop)
-                    while 1:
-                        if 'W' not in top_box:
-                            box_7 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_bottom2.png',0)
-                            # bottom_box.append('W')
-                            box_list_2.append(box_7)
-                            loop = loop-1
-                        if 'R' not in top_box:
-                            box_8 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_bottom2.png',0)
-                            # bottom_box.append('R')
-                            box_list_2.append(box_8)
-                            loop = loop-1
-                        if 'Y' not in top_box:
-                            box_9 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_bottom2.png',0)
-                            # bottom_box.append('Y')
-                            box_list_2.append(box_9)
-                            loop = loop-1
-                        if 'G' not in top_box:
-                            box_10 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_bottom2.png',0)
-                            # bottom_box.append('G')
-                            box_list_2.append(box_10)
-                            loop = loop-1
-                        if 'WP' not in top_box:
-                            box_11 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_bottom2.png',0)
-                            # bottom_box.append('WP')
-                            box_list_2.append(box_11)
-                            loop = loop-1
-                        if 'GP' not in top_box:
-                            box_12 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_bottom2.png',0)
-                            # bottom_box.append('GP')
-                            box_list_2.append(box_12)
-                            loop = loop-1
-                        if(loop<=0):
-                            break
-                
-                bottom = Matches2(box_in_sence_2,box_list_2,bottom_Angle,bottom_box,bottom_point,bottom_CenterX,bottom_CenterY)
-                
-                loop2 = a
-                if((loop2)>0):
-                    print(loop2)
-                    while 1:
-                        if box_7 in box_list_2:
-                            bottom_box.append('W')
-                            loop2 = loop2-1
-                        if box_8 in box_list_2:
-                            bottom_box.append('R')
-                            loop2 = loop2-1
-                        if box_9 in box_list_2:
-                            bottom_box.append('Y')
-                            loop2 = loop2-1
-                        if box_10 in box_list_2:
-                            bottom_box.append('G')
-                            loop2 = loop2-1
-                        if box_11 in box_list_2:
-                            bottom_box.append('WP')
-                            loop2 = loop2-1
-                        if box_12 in box_list_2:
-                            bottom_box.append('GP')
-                            loop2 = loop2-1
-                        if(loop2<=0):
-                            break
-                # while True:
-                #     if(len(bottom_Angle) != a and len(bottom_point) != a):
-                #         bottom = Matches2(box_in_sence_2,box_list_2,bottom_Angle,bottom_box,bottom_point,bottom_Center)
-                #     else:
-                #         break
+                top = Matches(top_img,box_list_1,top_Angle,top_box,top_point,top_CenterX,top_CenterY)
+                if(len(top_box)==6):
+                    out = Bubble_Sort2(top_box,top_Angle,top_point,top_CenterX,top_CenterY) #tag and 角度
+                    print('top_box : ',top_box)
+                    print('top_CenterX : ',top_CenterX)
+                    print('top_CenterY : ',top_CenterY)
+                    print('top_Angle : ',top_Angle) 
+                    print('top_point : ',top_point)
+                    print('bottom_box : ',bottom_box)
+                    print('bottom_CenterX : ',bottom_CenterX)
+                    print('bottom_CenterY : ',bottom_CenterY)
+                    print('bottom_Angle : ',bottom_Angle) 
+                    print('bottom_point : ',bottom_point) 
+                    print('********** 結束 **********') 
+                else :
+                    n = len(top_box)
+                    out = Bubble_Sort2(top_box,top_Angle,top_point,top_CenterX,top_CenterY) #tag and 角度
+                    a = (6-n)
+                    print(a)
+                    print('top_box : ',top_box)
+                    print('top_CenterX : ',top_CenterX)
+                    print('top_CenterY : ',top_CenterY)
+                    print('top_Angle : ',top_Angle) 
+                    print('top_point : ',top_point) 
+                    loop = a
+                    if((loop)>0):
+                        print(loop)
+                        while 1:
+                            if 'W' not in top_box:
+                                box_7 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_bottom2.png',0)
+                                # bottom_box.append('W')
+                                box_list_2.append(box_7)
+                                loop = loop-1
+                            if 'R' not in top_box:
+                                box_8 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_bottom2.png',0)
+                                # bottom_box.append('R')
+                                box_list_2.append(box_8)
+                                loop = loop-1
+                            if 'Y' not in top_box:
+                                box_9 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_bottom2.png',0)
+                                # bottom_box.append('Y')
+                                box_list_2.append(box_9)
+                                loop = loop-1
+                            if 'G' not in top_box:
+                                box_10 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_bottom2.png',0)
+                                # bottom_box.append('G')
+                                box_list_2.append(box_10)
+                                loop = loop-1
+                            if 'WP' not in top_box:
+                                box_11 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_bottom2.png',0)
+                                # bottom_box.append('WP')
+                                box_list_2.append(box_11)
+                                loop = loop-1
+                            if 'GP' not in top_box:
+                                box_12 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_bottom2.png',0)
+                                # bottom_box.append('GP')
+                                box_list_2.append(box_12)
+                                loop = loop-1
+                            if(loop<=0):
+                                break
+                    
+                    bottom = Matches2(box_in_sence_2,box_list_2,bottom_Angle,bottom_box,bottom_point,bottom_CenterX,bottom_CenterY)
+                    
+                    loop2 = a
+                    if((loop2)>0):
+                        print(loop2)
+                        while 1:
+                            if box_7 in box_list_2:
+                                bottom_box.append('W')
+                                loop2 = loop2-1
+                            if box_8 in box_list_2:
+                                bottom_box.append('R')
+                                loop2 = loop2-1
+                            if box_9 in box_list_2:
+                                bottom_box.append('Y')
+                                loop2 = loop2-1
+                            if box_10 in box_list_2:
+                                bottom_box.append('G')
+                                loop2 = loop2-1
+                            if box_11 in box_list_2:
+                                bottom_box.append('WP')
+                                loop2 = loop2-1
+                            if box_12 in box_list_2:
+                                bottom_box.append('GP')
+                                loop2 = loop2-1
+                            if(loop2<=0):
+                                break
+                    # while True:
+                    #     if(len(bottom_Angle) != a and len(bottom_point) != a):
+                    #         bottom = Matches2(box_in_sence_2,box_list_2,bottom_Angle,bottom_box,bottom_point,bottom_Center)
+                    #     else:
+                    #         break
 
-                print(bottom_box)
-                out = Bubble_Sort2(bottom_box,bottom_Angle,bottom_point,bottom_CenterX,bottom_CenterY) #tag and 角度
-                print('top_box : ',top_box)
-                print('top_CenterX : ',top_CenterX)
-                print('top_CenterY : ',top_CenterY) 
-                print('top_Angle : ',top_Angle) 
-                print('top_point : ',top_point)
-                print('bottom_box : ',bottom_box)
-                print('bottom_CenterX : ',bottom_CenterX)
-                print('bottom_CenterY : ',bottom_CenterY) 
-                print('bottom_Angle : ',bottom_Angle) 
-                print('bottom_point : ',bottom_point)
-                print('********** 結束 **********')
+                    print(bottom_box)
+                    out = Bubble_Sort2(bottom_box,bottom_Angle,bottom_point,bottom_CenterX,bottom_CenterY) #tag and 角度
+                    print('top_box : ',top_box)
+                    print('top_CenterX : ',top_CenterX)
+                    print('top_CenterY : ',top_CenterY) 
+                    print('top_Angle : ',top_Angle) 
+                    print('top_point : ',top_point)
+                    print('bottom_box : ',bottom_box)
+                    print('bottom_CenterX : ',bottom_CenterX)
+                    print('bottom_CenterY : ',bottom_CenterY) 
+                    print('bottom_Angle : ',bottom_Angle) 
+                    print('bottom_point : ',bottom_point)
+                    print('********** 結束 **********')
                 look_done = True
+                req_flag = 0
+            elif start_input == 2:
+                # Camera 1
+                frames_1 = pipeline_1.wait_for_frames()
+                color_frame_1 = frames_1.get_color_frame()
+                color_image_1 = np.asanyarray(color_frame_1.get_data())
 
-        if start_input == 2:
-            # Camera 1
-            frames_1 = pipeline_1.wait_for_frames()
-            color_frame_1 = frames_1.get_color_frame()
-            color_image_1 = np.asanyarray(color_frame_1.get_data())
+                # Camera 2
+                frames_2 = pipeline_2.wait_for_frames()
+                color_frame_2 = frames_2.get_color_frame()
+                color_image_2 = np.asanyarray(color_frame_2.get_data())
 
-            # Camera 2
-            frames_2 = pipeline_2.wait_for_frames()
-            color_frame_2 = frames_2.get_color_frame()
-            color_image_2 = np.asanyarray(color_frame_2.get_data())
+                # Stack all images horizontally
+                images = np.hstack((color_image_1,color_image_2))
 
-            # Stack all images horizontally
-            images = np.hstack((color_image_1,color_image_2))
+                # Show images
+                # cv.namedWindow('RealSense', cv.WINDOW_NORMAL)
+                # cv.imshow('RealSense', images)
+                # cv.waitKey(1)
 
-            # Show images
-            # cv.namedWindow('RealSense', cv.WINDOW_NORMAL)
-            # cv.imshow('RealSense', images)
-            # cv.waitKey(1)
+                cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/00.png',color_image_1)
+                cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/01.png',color_image_2)
 
-            cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/00.png',color_image_1)
-            cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/01.png',color_image_2)
+                box_in_sence_1 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/00.png') # A處照片top 輸入圖檔
+                box_in_sence_2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/01.png',0) # A處照片bottom 輸入圖檔
 
-            box_in_sence_1 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/00.png') # A處照片top 輸入圖檔
-            box_in_sence_2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/01.png',0) # A處照片bottom 輸入圖檔
+                # 正面
+                box_1 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_top2.png',0)
+                box_2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_top2.png',0)
+                box_3 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_top2.png',0)
+                box_4 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_top2.png',0)
+                box_5 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_top2.png',0)
+                box_6 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_top2.png',0)
+                # 反面
+                box_7 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_bottom2.png',0)
+                box_8 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_bottom2.png',0)
+                box_9 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_bottom2.png',0)
+                box_10 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_bottom2.png',0)
+                box_11 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_bottom2.png',0)
+                box_12 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_bottom2.png',0)
 
-            # 正面
-            box_1 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_top2.png',0)
-            box_2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_top2.png',0)
-            box_3 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_top2.png',0)
-            box_4 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_top2.png',0)
-            box_5 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_top2.png',0)
-            box_6 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_top2.png',0)
-            # 反面
-            box_7 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_bottom2.png',0)
-            box_8 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_bottom2.png',0)
-            box_9 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_bottom2.png',0)
-            box_10 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_bottom2.png',0)
-            box_11 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_bottom2.png',0)
-            box_12 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_bottom2.png',0)
+                box_list_1 = [box_1,box_2,box_3,box_4,box_5,box_6]
+                # box_list_1 = []
+                # box_list_2 = [box_7,box_8,box_9,box_10,box_11,box_12]
+                box_list_2 = []
+                top_box = []
+                top_Angle = []
+                top_point = []
+                top_CenterX = []
+                top_CenterY = []
+                bottom_box = []
+                bottom_Angle = []
+                bottom_point = []
+                bottom_CenterX = []
+                bottom_CenterY = []
+                abc = []
 
-            box_list_1 = [box_1,box_2,box_3,box_4,box_5,box_6]
-            # box_list_1 = []
-            # box_list_2 = [box_7,box_8,box_9,box_10,box_11,box_12]
-            box_list_2 = []
-            top_box = []
-            top_Angle = []
-            top_point = []
-            top_CenterX = []
-            top_CenterY = []
-            bottom_box = []
-            bottom_Angle = []
-            bottom_point = []
-            bottom_CenterX = []
-            bottom_CenterY = []
-            abc = []
+                #   dep
+                depth_colormap_1 = []
+                box_x = []
+                box_y = []
+                dep = RealSense_dep(depth_colormap_1)
+                # print(top)
+                src = dep
 
-            #   dep
-            depth_colormap_1 = []
-            box_x = []
-            box_y = []
-            dep = RealSense_dep(depth_colormap_1)
-            # print(top)
-            src = dep
+                AA = contours_demo2(src,box_x,box_y)
+                dep_cm = RealSense3(box_x,box_y)
+                # print(AA)
+                cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/AA.png', AA)
+                #   dep
 
-            AA = contours_demo2(src,box_x,box_y)
-            dep_cm = RealSense3(box_x,box_y)
-            # print(AA)
-            cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/AA.png', AA)
-            #   dep
+                src2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/AA.png')
+                top_img = access_pixels(box_in_sence_1,src2)
 
-            src2 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/AA.png')
-            top_img = access_pixels(box_in_sence_1,src2)
-
-            top = Matches(top_img,box_list_1,top_Angle,top_box,top_point,top_CenterX,top_CenterY)
-            if(len(top_box)==6):
-                out = Bubble_Sort2(top_box,top_Angle,top_point,top_CenterX,top_CenterY) #tag and 角度
-                print('top_box : ',top_box)
-                print('top_CenterX : ',top_CenterX)
-                print('top_CenterY : ',top_CenterY)
-                print('top_Angle : ',top_Angle) 
-                print('top_point : ',top_point)
-                print('bottom_box : ',bottom_box)
-                print('bottom_CenterX : ',bottom_CenterX)
-                print('bottom_CenterY : ',bottom_CenterY)
-                print('bottom_Angle : ',bottom_Angle) 
-                print('bottom_point : ',bottom_point) 
-                print('********** 結束 **********') 
-            else :
-                n = len(top_box)
-                out = Bubble_Sort2(top_box,top_Angle,top_point,top_CenterX,top_CenterY) #tag and 角度
-                a = (6-n)
-                print(a)
-                print('top_box : ',top_box)
-                print('top_CenterX : ',top_CenterX)
-                print('top_CenterY : ',top_CenterY)
-                print('top_Angle : ',top_Angle) 
-                print('top_point : ',top_point) 
-                loop = a
-                if((loop)>0):
-                    print(loop)
-                    while 1:
-                        if 'W' not in top_box:
-                            box_7 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_bottom2.png',0)
-                            box_list_2.append(box_7)
-                            loop = loop-1
-                        if 'R' not in top_box:
-                            box_8 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_bottom2.png',0)
-                            box_list_2.append(box_8)
-                            loop = loop-1
-                        if 'Y' not in top_box:
-                            box_9 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_bottom2.png',0)
-                            box_list_2.append(box_9)
-                            loop = loop-1
-                        if 'G' not in top_box:
-                            box_10 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_bottom2.png',0)
-                            box_list_2.append(box_10)
-                            loop = loop-1
-                        if 'WP' not in top_box:
-                            box_11 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_bottom2.png',0)
-                            box_list_2.append(box_11)
-                            loop = loop-1
-                        if 'GP' not in top_box:
-                            box_12 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_bottom2.png',0)
-                            box_list_2.append(box_12)
-                            loop = loop-1
-                        if(loop<=0):
+                top = Matches(top_img,box_list_1,top_Angle,top_box,top_point,top_CenterX,top_CenterY)
+                if(len(top_box)==6):
+                    out = Bubble_Sort2(top_box,top_Angle,top_point,top_CenterX,top_CenterY) #tag and 角度
+                    print('top_box : ',top_box)
+                    print('top_CenterX : ',top_CenterX)
+                    print('top_CenterY : ',top_CenterY)
+                    print('top_Angle : ',top_Angle) 
+                    print('top_point : ',top_point)
+                    print('bottom_box : ',bottom_box)
+                    print('bottom_CenterX : ',bottom_CenterX)
+                    print('bottom_CenterY : ',bottom_CenterY)
+                    print('bottom_Angle : ',bottom_Angle) 
+                    print('bottom_point : ',bottom_point) 
+                    print('********** 結束 **********') 
+                else :
+                    n = len(top_box)
+                    out = Bubble_Sort2(top_box,top_Angle,top_point,top_CenterX,top_CenterY) #tag and 角度
+                    a = (6-n)
+                    print(a)
+                    print('top_box : ',top_box)
+                    print('top_CenterX : ',top_CenterX)
+                    print('top_CenterY : ',top_CenterY)
+                    print('top_Angle : ',top_Angle) 
+                    print('top_point : ',top_point) 
+                    loop = a
+                    if((loop)>0):
+                        print(loop)
+                        while 1:
+                            if 'W' not in top_box:
+                                box_7 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W/w_bottom2.png',0)
+                                box_list_2.append(box_7)
+                                loop = loop-1
+                            if 'R' not in top_box:
+                                box_8 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/R/r_bottom2.png',0)
+                                box_list_2.append(box_8)
+                                loop = loop-1
+                            if 'Y' not in top_box:
+                                box_9 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/Y/y_bottom2.png',0)
+                                box_list_2.append(box_9)
+                                loop = loop-1
+                            if 'G' not in top_box:
+                                box_10 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G/g_bottom2.png',0)
+                                box_list_2.append(box_10)
+                                loop = loop-1
+                            if 'WP' not in top_box:
+                                box_11 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/W_P/wp_bottom2.png',0)
+                                box_list_2.append(box_11)
+                                loop = loop-1
+                            if 'GP' not in top_box:
+                                box_12 = cv.imread('/home/iclab/Documents/solomon_ws/src/pocky_vision/img/G_P/gp_bottom2.png',0)
+                                box_list_2.append(box_12)
+                                loop = loop-1
+                            if(loop<=0):
+                                break
+                    
+                    bottom = Matches2(box_in_sence_2,box_list_2,bottom_Angle,bottom_box,bottom_point,bottom_CenterX,bottom_CenterY)
+                    while True:
+                        if(len(bottom_box) != a and len(bottom_point) != a):
+                            bottom = Matches2(box_in_sence_2,box_list_2,bottom_Angle,bottom_box,bottom_point,bottom_CenterX,bottom_CenterY)
+                        else:
                             break
-                
-                bottom = Matches2(box_in_sence_2,box_list_2,bottom_Angle,bottom_box,bottom_point,bottom_CenterX,bottom_CenterY)
-                while True:
-                    if(len(bottom_box) != a and len(bottom_point) != a):
-                        bottom = Matches2(box_in_sence_2,box_list_2,bottom_Angle,bottom_box,bottom_point,bottom_CenterX,bottom_CenterY)
-                    else:
-                        break
-                out = Bubble_Sort2(bottom_box,bottom_Angle,bottom_point,bottom_CenterX,bottom_CenterY) #tag and 角度
-                print('top_box : ',top_box)
-                print('top_CenterX : ',top_CenterX)
-                print('top_CenterY : ',top_CenterY)
-                print('top_Angle : ',top_Angle) 
-                print('top_point : ',top_point)
-                print('bottom_box : ',bottom_box)
-                print('bottom_CenterX : ',bottom_CenterX)
-                print('bottom_CenterY : ',bottom_CenterY)
-                print('bottom_Angle : ',bottom_Angle) 
-                print('bottom_point : ',bottom_point)
-                print('********** 結束 **********')
-                # break
+                    out = Bubble_Sort2(bottom_box,bottom_Angle,bottom_point,bottom_CenterX,bottom_CenterY) #tag and 角度
+                    print('top_box : ',top_box)
+                    print('top_CenterX : ',top_CenterX)
+                    print('top_CenterY : ',top_CenterY)
+                    print('top_Angle : ',top_Angle) 
+                    print('top_point : ',top_point)
+                    print('bottom_box : ',bottom_box)
+                    print('bottom_CenterX : ',bottom_CenterX)
+                    print('bottom_CenterY : ',bottom_CenterY)
+                    print('bottom_Angle : ',bottom_Angle) 
+                    print('bottom_point : ',bottom_point)
+                    print('********** 結束 **********')
+                    # break
                 look_done = True
-        if start_input == 3:
-            take_pic()
+                req_flag = 0
+            elif start_input == 3:
+                take_pic()
+                req_flag = 0
+            elif start_input == 4:
+                depth_colormap = []
+                box_x = []
+                box_y = []
+                dep1 = dep_img(depth_colormap)
+                # print(top)
+                src = dep1
+                # print(src)
+                AA = contours_demo(src,box_x,box_y)
+                dep_cm = RealSense2(box_x,box_y)
+                # print(AA)
+                cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/AA.png', AA)
+                req_flag = 0
+            elif start_input == 5:
+                pass
+                
+            # rospy.spin()
+            if rospy.is_shutdown():
+                break
 
-        if start_input == 4:
-            depth_colormap = []
-            box_x = []
-            box_y = []
-            dep1 = dep_img(depth_colormap)
-            # print(top)
-            src = dep1
-            # print(src)
-            AA = contours_demo(src,box_x,box_y)
-            dep_cm = RealSense2(box_x,box_y)
-            # print(AA)
-            cv.imwrite('/home/iclab/Documents/solomon_ws/src/pocky_vision/AA.png', AA)
-
-        if start_input == 5:
-            pass
-            
-        rospy.spin()
+            rate.sleep()
 
     except KeyboardInterrupt:
         pass
