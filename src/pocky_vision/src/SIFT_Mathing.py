@@ -228,7 +228,8 @@ def Matches(image, Match_image, angle, box, point, CenterX, CenterY):
                         if(y==5):
                             box.append('GP')
         
-                y = y + 1
+            ## Debug
+            y = y + 1
                 # cv.waitKey(0)
                 # cv.destroyAllWindows()
             
@@ -358,17 +359,17 @@ def Matches2(image, Match_image, angle, box, point, CenterX, CenterY):
             cv.namedWindow('flann-match', cv.WINDOW_NORMAL) #設置為WINDOW_NORMAL可以任意縮放
             cv.imshow('flann-match',result)
 
-            if(X_side>=50 and X_side<=2000) and (Y_side>=50 and Y_side<=2000):
-                if ((X_side_Less == 0 and Y_side_Less == 0) or (X_side_Less <= 6 and Y_side_Less <= 6)):
-                    if ((X_center_point_Less == 0 and Y_center_point_Less == 0) or (X_center_point_Less <= 5 and Y_center_point_Less <= 5)):
+            if(X_side>=50 and X_side<=2100) and (Y_side>=50 and Y_side<=2100):
+                if ((X_side_Less == 0 and Y_side_Less == 0) or (X_side_Less <= 7 and Y_side_Less <= 7)):
+                    if ((X_center_point_Less == 0 and Y_center_point_Less == 0) or (X_center_point_Less <= 6 and Y_center_point_Less <= 6)):
                         angle.append(angle_diff)
                         point.append(len(scene_pts))
                         CenterX.append(X_abs)
                         CenterY.append(Y_abs)
 
-                y = y + 1
-                # cv.waitKey(0)
-                # cv.destroyAllWindows()
+            y = y + 1
+            # cv.waitKey(0)
+            # cv.destroyAllWindows()
             
         else:
             print( "Not enough matches are found - %d/%d" % (len(goodMatches),MIN_MATCH_COUNT))
@@ -721,10 +722,9 @@ if __name__ == '__main__':
         pipeline_1.wait_for_frames()
     try:
         while not rospy.is_shutdown():
-            global req_flag
-            start_input = req_flag
-            # start_input = int(input('開始兩層策略請按1 開始單層策略請按2 手動拍照請按3 深度資料請按4 離開請按5 : ')) #輸入開始指令
-            # while not rospy.is_shutdown():
+            # global req_flag
+            # start_input = req_flag
+            start_input = int(input('開始兩層策略請按1 開始單層策略請按2 手動拍照請按3 深度資料請按4 離開請按5 : ')) #輸入開始指令
             if start_input == 0:
                 pass
             elif start_input == 1:
