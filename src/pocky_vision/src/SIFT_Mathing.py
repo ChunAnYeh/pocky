@@ -607,7 +607,7 @@ def contours_demo2(image,x,y):
     hsv = cv.cvtColor(d, cv.COLOR_BGR2HSV) 
     cv.namedWindow("hsv1", cv.WINDOW_NORMAL) #設置為WINDOW_NORMAL可以任意縮放
     cv.imshow("hsv1",hsv)
-    lower_red = np.array([0,43,85]) 
+    lower_red = np.array([0,43,110]) 
     upper_red = np.array([111, 255, 255]) 
     mask = cv.inRange(hsv, lower_red, upper_red) 
     cv.namedWindow("hsv", cv.WINDOW_NORMAL) #設置為WINDOW_NORMAL可以任意縮放
